@@ -1,7 +1,7 @@
-import React, {useId, useRef, useState} from 'react';
+import React, {useEffect, useId, useRef, useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {fetchUsers, fetchRepositories} from '../redux/store';
-import {Button, FormControl} from "@mui/material";
+import {Box, Button, FormControl, Typography} from "@mui/material";
 
 export interface User {
   login: string;
@@ -41,38 +41,55 @@ function SearchComponent() {
     setShowRepos(true);
   };
 
+  useEffect(() => {
+    console.log(query)
+  }, [query])
+
   const id = useId()
 
   const userList = users.map((user: User) => (
-      <div key={user.id + id + user.login}
+      <Box key={user.id + id + user.login}
            style={{
+             display: 'flex',
+             flexDirection: 'row',
              backgroundColor: "dimgray",
              marginBottom: "8px",
              borderRadius: "8px",
              width: showRepos ? '50%' : '20%',
              marginTop: "21px",
            }}>
-        <img src={user.avatar_url}
-             alt={user.login}
-             style={{
-               marginLeft: "15px",
-               marginTop: "15px",
-               borderRadius: '50%',
-               boxShadow: '0 0 5px 4px rgba(255, 180, 128, 0.5)',
-               width: '20%'
-             }}/>
-        <h2>{user.login}</h2>
-
+        <Box sx={{
+          flexDirection: 'column',
+          flex: 1,
+          flexBasis: '25%',
+        }}>
+          <img src={user.avatar_url}
+               alt={user.login}
+               style={{
+                 marginLeft: "15px",
+                 marginTop: "15px",
+                 borderRadius: '50%',
+                 boxShadow: '0 0 5px 4px rgba(255, 180, 128, 0.5)',
+                 width: '40%'
+               }}/>
+          <Typography variant='body2' sx={{
+            textAlign: 'center',
+            // position: 'absolute'
+          }}>{user.login}</Typography>
+        </Box>
         {showRepos && repositories[user.login] && (
-            <div>
+            <Box sx={{
+              flex: 1,
+              flexBasis: '75%',
+            }}>
               {repositories[user.login].map((repository) => (
-                  <div key={repository.name}>
+                  <Box key={repository.name} sx={{ p: '4px', backgroundColor: 'brown', mb: '4px'}}>
                     <a href={repository.html_url}>{repository.name}</a>
-                  </div>
+                  </Box>
               ))}.
-            </div>
+            </Box>
         )}
-      </div>
+      </Box>
   ));
 
   return (
