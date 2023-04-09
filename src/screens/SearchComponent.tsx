@@ -42,8 +42,9 @@ function SearchComponent() {
   };
 
   useEffect(() => {
+    // setShowRepos(!showRepos)
     console.log(query)
-  }, [query])
+  }, [])
 
   const id = useId()
 
@@ -59,7 +60,7 @@ function SearchComponent() {
              marginTop: "21px",
            }}>
         <Box sx={{
-          flexDirection: 'column',
+          flexDirection: showRepos ? 'column' : 'row',
           flex: 1,
           flexBasis: '25%',
         }}>
@@ -75,7 +76,7 @@ function SearchComponent() {
           <Typography variant='body2' sx={{
             textAlign: 'center',
             // position: 'absolute'
-          }}>{user.login}</Typography>
+          }}>{showRepos ? `${user.login} repos` : user.login}</Typography>
         </Box>
         {showRepos && repositories[user.login] && (
             <Box sx={{
