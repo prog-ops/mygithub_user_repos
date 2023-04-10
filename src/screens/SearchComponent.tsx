@@ -1,7 +1,7 @@
 import React, {useEffect, useId, useRef, useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {fetchUsers, fetchRepositories} from '../redux/store';
-import {Box, Button, FormControl, Typography} from "@mui/material";
+import {Box, Button, FormControl, Link, Typography} from "@mui/material";
 import '../styles/styles.css'
 
 export interface User {
@@ -86,41 +86,38 @@ function SearchComponent() {
   const id = useId()
 
   const userList = users.map((user: User) => (
-      <Box key={user.id + id + user.login}
-           style={{
-             display: 'flex',
-             flexDirection: 'row',
-             backgroundColor: "dimgray",
-             marginBottom: "8px",
-             borderRadius: "8px",
-             width: showRepos ? '50%' : '20%',
-             marginTop: "21px",
-           }}>
+      <Box key={user.id + id + user.login} className='item-container' style={{width: showRepos ? '50%' : '20%'}}>
+
         <Box sx={{
           flexDirection: showRepos ? 'column' : 'row',
           flex: 1,
           flexBasis: '25%',
+          mr: '8px'
         }}>
-          <img src={user.avatar_url}
-               alt={user.login}
-               className='avatar'/>
-          <Typography variant='body2' sx={{
-            textAlign: 'center',
-            // position: 'absolute'
-          }}>{showRepos ? `${user.login} repos` : user.login}</Typography>
+
+          <img src={user.avatar_url} alt={user.login} className='avatar'/>
+
+          <Box className='user'>
+            <Typography variant='body2' sx={{textAlign: 'center'}}>{user.login}</Typography>
+          </Box>
+
         </Box>
-        {showRepos && repositories[user.login] && (
-            <Box className='vibrate' sx={{
+
+        {(showRepos && repositories[user.login]) ?
+            (<Box className='vibrate' sx={{
               flex: 1,
-              flexBasis: '75%',
+              flexBasis: '75%'
             }}>
               {repositories[user.login].map((repository) => (
-                  <Box key={repository.name} sx={{p: '4px', backgroundColor: 'brown', mb: '4px'}}>
-                    <a href={repository.html_url}>{repository.name}</a>
+                  <Box key={repository.name} sx={{mt: '8px', mr: '8px', mb: '4px', p: '4px'}}>
+                    <Link className='link' href={repository.html_url}>{repository.name}</Link>
                   </Box>
               ))}.
-            </Box>
-        )}
+            </Box>) :
+            (showRepos && !repositories[user.login]) ?
+                (<Typography sx={{mr: '20px', mt: '20px'}}>No repos available.</Typography>) :
+                null
+        }
       </Box>
   ));
 
