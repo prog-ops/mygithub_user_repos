@@ -103,20 +103,14 @@ function SearchComponent() {
         }}>
           <img src={user.avatar_url}
                alt={user.login}
-               style={{
-                 marginLeft: "15px",
-                 marginTop: "15px",
-                 borderRadius: '50%',
-                 boxShadow: '0 0 5px 4px rgba(255, 180, 128, 0.5)',
-                 width: '40%'
-               }}/>
+               className='avatar'/>
           <Typography variant='body2' sx={{
             textAlign: 'center',
             // position: 'absolute'
           }}>{showRepos ? `${user.login} repos` : user.login}</Typography>
         </Box>
         {showRepos && repositories[user.login] && (
-            <Box sx={{
+            <Box className='vibrate' sx={{
               flex: 1,
               flexBasis: '75%',
             }}>
@@ -153,7 +147,7 @@ function SearchComponent() {
         </FormControl>
         <Button
             variant='contained'
-            // className='bounce-btn'
+            className='bounce-btn'
             sx={{width: '80%', mt: '10px'}}
             onClick={handleShowAllRepositories}>
           Search
