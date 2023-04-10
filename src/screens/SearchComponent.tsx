@@ -2,6 +2,7 @@ import React, {useEffect, useId, useRef, useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {fetchUsers, fetchRepositories} from '../redux/store';
 import {Box, Button, FormControl, Typography} from "@mui/material";
+import '../styles/styles.css'
 
 export interface User {
   login: string;
@@ -22,29 +23,65 @@ function SearchComponent() {
   const dispatch = useDispatch();
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  const handleSearch = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSearch = /*added async*/async () => {
     const newQuery = searchRef.current?.value ?? "";
     setQuery(newQuery);
-    if (newQuery === "") {
-      dispatch({type: "CLEAR_USERS"});
-    } else {
-      dispatch(fetchUsers(newQuery) as any);
+
+    setLoading(true);
+
+    try {
+      if (newQuery === "") {
+        dispatch({type: "CLEAR_USERS"});
+      } else {
+        await dispatch(fetchUsers(newQuery) as any);
+        // dispatch(fetchUsers(newQuery) as any);
+      }
+      setError("");
+    } catch (err: any) {
+      setError(
+          err.response?.status === 403
+              ? "You have exceeded the Github API rate limit. Please try again later."
+              : "An error occurred while fetching users. Please try again later."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleShowAllRepositories = () => {
-    users.forEach((user: User) => {
-      if (!repositories[user.login]) {
-        dispatch(fetchRepositories(user.login) as any);
-      }
-    });
-    setShowRepos(true);
+  const handleShowAllRepositories = /*added async*/async () => {
+    setLoading(true);
+
+    try {
+      await Promise.all(
+          users.map(async (user: User) => {
+            if (!repositories[user.login]) {
+              await dispatch(fetchRepositories(user.login) as any);
+            }
+          })
+      );
+      setShowRepos(true);
+
+      setError("");
+
+    } catch (err: any) {
+      setError(
+          err.response?.status === 403
+              ? "You have exceeded the Github API rate limit. Please try again later."
+              : "An error occurred while fetching repositories. Please try again later."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    // setShowRepos(!showRepos)
     console.log(query)
-  }, [])
+  }, [
+    showRepos
+  ])
 
   const id = useId()
 
@@ -84,7 +121,7 @@ function SearchComponent() {
               flexBasis: '75%',
             }}>
               {repositories[user.login].map((repository) => (
-                  <Box key={repository.name} sx={{ p: '4px', backgroundColor: 'brown', mb: '4px'}}>
+                  <Box key={repository.name} sx={{p: '4px', backgroundColor: 'brown', mb: '4px'}}>
                     <a href={repository.html_url}>{repository.name}</a>
                   </Box>
               ))}.
@@ -94,8 +131,18 @@ function SearchComponent() {
   ));
 
   return (
-      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-        <FormControl sx={{width: '80%', mt: '10px'}} variant='filled'>
+      <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',}}>
+        <FormControl sx={{
+          width: '80%',
+          mt: '10px',
+          height: "3rem",
+          "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "blue",
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "gray",
+          }
+        }} variant='filled'>
           <input
               type="text"
               ref={searchRef}
@@ -104,11 +151,17 @@ function SearchComponent() {
               style={{flex: 1, padding: 10}}
           />
         </FormControl>
-        <Button variant='contained' sx={{width: '80%', mt: '10px'}} onClick={handleShowAllRepositories}>
+        <Button
+            variant='contained'
+            // className='bounce-btn'
+            sx={{width: '80%', mt: '10px'}}
+            onClick={handleShowAllRepositories}>
           Search
         </Button>
+        {loading && <Typography variant='h2'>Loading...</Typography>}
+        {error && <Typography variant='h3' sx={{color: 'indianred'}}>{error}</Typography>}
         {userList}
-      </div>
+      </Box>
   );
 };
 
