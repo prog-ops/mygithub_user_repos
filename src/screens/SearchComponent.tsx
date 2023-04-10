@@ -158,7 +158,7 @@ function SearchComponent() {
             onClick={handleShowAllRepositories}>
           Search
         </Button>
-        {loading && <Typography variant='h2'>Loading...</Typography>}
+        {loading && <Typography variant='h2' sx={{color: 'white'}}>Loading...</Typography>}
         {error && <Typography variant='h3' sx={{color: 'indianred'}}>{error}</Typography>}
         {userList}
       </Box>
