@@ -79,9 +79,7 @@ function SearchComponent() {
 
   useEffect(() => {
     console.log(query)
-  }, [
-    showRepos
-  ])
+  }, [])
 
   const id = useId()
 
