@@ -80,7 +80,13 @@ export function fetchUsers(query: string) {
       dispatch({ type: 'SET_USERS', payload: users });
 
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message.toString() });
+      if (error.response && error.response.status === 403) {
+        console.log(`${error.response?.status} : ${error.message}`)
+        dispatch({ type: 'SET_ERROR', payload: 'Rate limit exceeded. Try again later.' });
+      } else {
+        console.log(error.message)
+        dispatch({ type: 'SET_ERROR', payload: error.message });
+      }
     }
   };
 }
@@ -104,7 +110,7 @@ export function fetchRepositories(userLogin: string) {
       if (error.response && error.response.status === 403) {
         dispatch({ type: 'SET_ERROR', payload: 'Rate limit exceeded. Try again later.' });
       } else {
-        dispatch({ type: 'SET_ERROR', payload: error.message.toString() });
+        dispatch({ type: 'SET_ERROR', payload: error.message });
       }
     }
   };
