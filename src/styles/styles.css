@@ -21,6 +21,18 @@
   border-bottom-left-radius: 8px;
 }
 
+.user-login {
+  margin-left: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.user-login-repos {
+  text-align: center;
+  background-color: rgb(128, 128, 128);
+  width: 100%;
+}
+
 .avatar {
   border-radius: 50%;
   box-shadow: 0 0 5px 4px rgba(255, 180, 128, 0.5);

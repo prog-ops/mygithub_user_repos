@@ -1,9 +1,21 @@
 import React, {Dispatch, useEffect, useId, useRef, useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {fetchUsers, fetchRepositories, State, User} from '../redux/store';
-import {Avatar, Box, Button, Chip, FormControl, Link, Typography} from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  FormControl,
+  Link,
+  Typography
+} from "@mui/material";
 import '../styles/styles.css'
 import {debounce} from "lodash";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 function SearchComponent() {
   const [showRepos, setShowRepos] = useState(false);
@@ -78,17 +90,22 @@ function SearchComponent() {
           flexDirection: showRepos ? 'column' : 'row',
           flex: 1,
           flexBasis: '25%',
-          mr: '8px'
         }}>
           {/*<img src={user.avatar_url} alt={user.login} className='avatar'/>*/}
-          <Avatar
-              alt={user.login}
-              src={user.avatar_url}
-              sx={{marginTop: '15px', marginLeft: '15px', boxShadow: '0 0 5px 4px rgba(20, 180, 0, 0.8)'}}
-          />
-
           <Box className='user'>
-            <Typography variant='body2' sx={{textAlign: 'center'}}>{user.login}</Typography>
+            <Avatar
+                alt={user.login}
+                src={user.avatar_url}
+                sx={{marginTop: '20px', marginLeft: '15px', boxShadow: '0 0 5px 4px rgba(20, 180, 0, 0.8)'}}
+            />
+            {(showRepos && repositories[user.login]) ? null : <Typography
+                variant='h4'
+                className={
+                  showRepos && repositories[user.login]
+                      ? 'user-login-repos'
+                      : 'user-login'}>
+              {user.login}
+            </Typography>}
           </Box>
         </Box>
 
@@ -96,16 +113,27 @@ function SearchComponent() {
             ? (<Box
                 className='vibrate'
                 sx={{
-                  flex: 1,
-                  flexBasis: '75%'
+                  // flex: 1,
+                  // flexBasis: '100%'
+                  marginLeft: '20px'
                 }}>
-              {repositories[user.login].map((repository) => (
-                  <Box key={repository.name} sx={{mt: '8px', mr: '8px', mb: '4px', p: '4px'}}>
-                    <Chip label={<Link className='link' href={repository.html_url}>{repository.name}</Link>} />
-                  </Box>
-              ))}.
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+                  <Typography>{(showRepos && repositories[user.login]) ? user.login + " repositories:" : ""}</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {repositories[user.login].map((repository) => (
+                      // <Box key={repository.name} sx={{mt: '8px', mr: '8px', mb: '4px', p: '4px'}}>
+                      <Chip
+                          key={repository.name}
+                          label={<Link className='link' href={repository.html_url}>{repository.name}</Link>}
+                      />
+                      // </Box>
+                  ))}
+                </AccordionDetails>
+              </Accordion>
             </Box>)
-            : (showRepos && !repositories[user.login]) ?
+            : (!showRepos && !repositories[user.login]) ?
                 (<Typography sx={{mr: '20px', mt: '20px'}}>No repos available.</Typography>) :
                 null
         }
@@ -139,7 +167,7 @@ function SearchComponent() {
             className='bounce-btn'
             sx={{width: '80%', mt: '10px'}}
             onClick={handleShowAllRepositories}>
-          Search with repos
+          Show repositories
         </Button>
         {loading && <Typography variant='h2' sx={{color: 'white'}}>Loading...</Typography>}
         {error && <Typography variant='h3' sx={{color: 'indianred'}}>{error}</Typography>}
