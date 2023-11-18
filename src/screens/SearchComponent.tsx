@@ -1,43 +1,30 @@
-import React, {useEffect, useId, useRef, useState} from 'react';
+import React, {Dispatch, useEffect, useId, useRef, useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
-import {fetchUsers, fetchRepositories} from '../redux/store';
+import {fetchUsers, fetchRepositories, State, User} from '../redux/store';
 import {Box, Button, FormControl, Link, Typography} from "@mui/material";
 import '../styles/styles.css'
-
-export interface User {
-  login: string;
-  id: number;
-  avatar_url: string;
-}
-
-export interface RootState {
-  users: User[];
-  repositories: Record<string, { name: string; html_url: string }[]>;
-}
+import {debounce} from "lodash";
 
 function SearchComponent() {
   const [showRepos, setShowRepos] = useState(false);
   const [query, setQuery] = useState("");
-  const users = useSelector((state: RootState) => state.users);
-  const repositories = useSelector((state: RootState) => state.repositories);
+  const users = useSelector((state: State) => state.users);
+  const repositories = useSelector((state: State) => state.repositories);
   const dispatch = useDispatch();
   const searchRef = useRef<HTMLInputElement | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSearch = /*added async*/async () => {
+  const handleSearch = async () => {
     const newQuery = searchRef.current?.value ?? "";
     setQuery(newQuery);
-
     setLoading(true);
-
     try {
       if (newQuery === "") {
         dispatch({type: "CLEAR_USERS"});
       } else {
-        await dispatch(fetchUsers(newQuery) as any);
-        // dispatch(fetchUsers(newQuery) as any);
+        await dispatch(fetchUsers(newQuery) as any); // immediate call to fetchUsers, this will call api after every character, instead, better use debouncing (debouncedHandleSearch)
       }
       setError("");
     } catch (err: any) {
@@ -51,7 +38,9 @@ function SearchComponent() {
     }
   };
 
-  const handleShowAllRepositories = /*added async*/async () => {
+  const debouncedHandleSearch = debounce(handleSearch, 1_000); // 1s debounce delay
+
+  const handleShowAllRepositories = async () => {
     setLoading(true);
 
     try {
@@ -77,28 +66,28 @@ function SearchComponent() {
     }
   };
 
-  useEffect(() => {
-    console.log(query)
-  }, [])
+  /*useEffect(() => {
+    // console.log(query)
+  }, [])*/
 
   const id = useId()
 
   const userList = users.map((user: User) => (
-      <Box key={user.id + id + user.login} className='item-container' style={{width: showRepos ? '50%' : '20%'}}>
-
+      <Box
+          key={user.id + id + user.login}
+          className='item-container'
+          style={{width: showRepos ? '50%' : '20%'}}>
         <Box sx={{
           flexDirection: showRepos ? 'column' : 'row',
           flex: 1,
           flexBasis: '25%',
           mr: '8px'
         }}>
-
           <img src={user.avatar_url} alt={user.login} className='avatar'/>
 
           <Box className='user'>
             <Typography variant='body2' sx={{textAlign: 'center'}}>{user.login}</Typography>
           </Box>
-
         </Box>
 
         {(showRepos && repositories[user.login]) ?
@@ -136,7 +125,8 @@ function SearchComponent() {
               type="text"
               ref={searchRef}
               placeholder="Search users"
-              onChange={handleSearch}
+              onChange={debouncedHandleSearch}
+              // onChange={handleSearch}
               style={{flex: 1, padding: 10}}
           />
         </FormControl>
@@ -155,3 +145,6 @@ function SearchComponent() {
 };
 
 export default SearchComponent;
+/*
+The useDebounce hook can be implemented in the SearchComponent to prevent the fetchUsers function from being called repeatedly on every keystroke.
+ */
