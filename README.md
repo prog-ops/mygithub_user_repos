@@ -9,6 +9,7 @@ This project is built using the following tech stack:
 - Material UI
 - Redux
 - Hooks
+- Debouncing
 
 ### Features
 This project comes with the following features:
@@ -26,7 +27,7 @@ This project is deployed and monitored using Checkly, a Vercel monitoring platfo
 
 ### Getting Started
 To get started with this project, follow these steps:
-- Clone this repository: `git clone https://github.com/your-username/awesome-react-project.git`
+- Clone this repository: `git clone https://github.com/prog-ops/mygithub_user_repos.git`
 - Install dependencies: `npm install`
 - Start the development server: `npm run start`
 - Open your browser and go to `http://localhost:3000`
