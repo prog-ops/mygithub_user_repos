@@ -1,7 +1,7 @@
 import React, {Dispatch, useEffect, useId, useRef, useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {fetchUsers, fetchRepositories, State, User} from '../redux/store';
-import {Box, Button, FormControl, Link, Typography} from "@mui/material";
+import {Avatar, Box, Button, Chip, FormControl, Link, Typography} from "@mui/material";
 import '../styles/styles.css'
 import {debounce} from "lodash";
 
@@ -42,7 +42,6 @@ function SearchComponent() {
 
   const handleShowAllRepositories = async () => {
     setLoading(true);
-
     try {
       await Promise.all(
           users.map(async (user: User) => {
@@ -52,9 +51,7 @@ function SearchComponent() {
           })
       );
       setShowRepos(true);
-
       setError("");
-
     } catch (err: any) {
       setError(
           err.response?.status === 403
@@ -76,32 +73,39 @@ function SearchComponent() {
       <Box
           key={user.id + id + user.login}
           className='item-container'
-          style={{width: showRepos ? '50%' : '20%'}}>
+          style={{width: showRepos ? '80%' : '50%'}}>
         <Box sx={{
           flexDirection: showRepos ? 'column' : 'row',
           flex: 1,
           flexBasis: '25%',
           mr: '8px'
         }}>
-          <img src={user.avatar_url} alt={user.login} className='avatar'/>
+          {/*<img src={user.avatar_url} alt={user.login} className='avatar'/>*/}
+          <Avatar
+              alt={user.login}
+              src={user.avatar_url}
+              sx={{marginTop: '15px', marginLeft: '15px', boxShadow: '0 0 5px 4px rgba(20, 180, 0, 0.8)'}}
+          />
 
           <Box className='user'>
             <Typography variant='body2' sx={{textAlign: 'center'}}>{user.login}</Typography>
           </Box>
         </Box>
 
-        {(showRepos && repositories[user.login]) ?
-            (<Box className='vibrate' sx={{
-              flex: 1,
-              flexBasis: '75%'
-            }}>
+        {(showRepos && repositories[user.login])
+            ? (<Box
+                className='vibrate'
+                sx={{
+                  flex: 1,
+                  flexBasis: '75%'
+                }}>
               {repositories[user.login].map((repository) => (
                   <Box key={repository.name} sx={{mt: '8px', mr: '8px', mb: '4px', p: '4px'}}>
-                    <Link className='link' href={repository.html_url}>{repository.name}</Link>
+                    <Chip label={<Link className='link' href={repository.html_url}>{repository.name}</Link>} />
                   </Box>
               ))}.
-            </Box>) :
-            (showRepos && !repositories[user.login]) ?
+            </Box>)
+            : (showRepos && !repositories[user.login]) ?
                 (<Typography sx={{mr: '20px', mt: '20px'}}>No repos available.</Typography>) :
                 null
         }
@@ -135,7 +139,7 @@ function SearchComponent() {
             className='bounce-btn'
             sx={{width: '80%', mt: '10px'}}
             onClick={handleShowAllRepositories}>
-          Search
+          Search with repos
         </Button>
         {loading && <Typography variant='h2' sx={{color: 'white'}}>Loading...</Typography>}
         {error && <Typography variant='h3' sx={{color: 'indianred'}}>{error}</Typography>}
