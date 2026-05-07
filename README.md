@@ -1,6 +1,6 @@
 # Github Users App
 
-A React JS project with improved UI effects, animations, logical conditions, styles, keyboard handling, error and loading handling, and responsive UI, that is optimized for mobile view.
+Allows you to search Github users and repos. A frontend project with improved UI effects, animations, logical conditions, styles, keyboard handling, error and loading handling, and responsive UI, that is optimized for mobile view.
 
 ### Tech Stack
 This project is built using the following tech stack:
