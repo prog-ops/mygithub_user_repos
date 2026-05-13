@@ -1,4 +1,4 @@
-# Github Users App
+# Github User Finder
 
 Allows you to search Github users and repos. A frontend project with improved UI effects, animations, logical conditions, styles, keyboard handling, error and loading handling, and responsive UI, that is optimized for mobile view.
 
