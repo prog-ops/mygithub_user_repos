@@ -7,8 +7,8 @@ import {
   AccordionSummary,
   Avatar,
   Box,
-  Button,
   Chip,
+  CircularProgress,
   FormControl,
   Link,
   Typography
@@ -18,13 +18,15 @@ import {debounce} from "lodash";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 function SearchComponent() {
-  const [showRepos, setShowRepos] = React.useState(false);
   const users = useSelector((state: State) => state.users);
   const repositories = useSelector((state: State) => state.repositories);
   const loading = useSelector((state: State) => state.loading);
   const error = useSelector((state: State) => state.error);
   const dispatch = useDispatch();
   const searchRef = useRef<HTMLInputElement | null>(null);
+
+  // Track which user cards are currently fetching repos
+  const [loadingRepos, setLoadingRepos] = React.useState<Record<string, boolean>>({});
 
   // Stable debounced search — memoized so the same debounce instance persists across renders
   const debouncedDispatch = useMemo(
@@ -44,84 +46,126 @@ function SearchComponent() {
     }
   }, [dispatch, debouncedDispatch]);
 
-  const handleShowAllRepositories = useCallback(async () => {
-    if (users.length === 0) return;
-    try {
-      await Promise.all(
-          users.map(async (user: User) => {
-            if (!repositories[user.login]) {
-              await dispatch(fetchRepositories(user.login) as any);
-            }
-          })
-      );
-      setShowRepos(true);
-    } catch {
-      // Errors are handled by the thunk → redux store
-    }
-  }, [users, repositories, dispatch]);
+  // Fetch repos for a single user when their accordion is expanded
+  const handleAccordionToggle = useCallback(
+      (userLogin: string) => async (_event: React.SyntheticEvent, isExpanded: boolean) => {
+        if (isExpanded && !repositories[userLogin]) {
+          setLoadingRepos(prev => ({...prev, [userLogin]: true}));
+          try {
+            await dispatch(fetchRepositories(userLogin) as any);
+          } catch {
+            // Errors handled by the thunk → redux store
+          } finally {
+            setLoadingRepos(prev => ({...prev, [userLogin]: false}));
+          }
+        }
+      },
+      [repositories, dispatch]
+  );
 
   const id = useId();
 
-  const userList = users.map((user: User) => (
-      <Box
-          key={`${user.id}-${id}-${user.login}`}
-          className='item-container'
-          style={{width: showRepos ? '80%' : '50%'}}>
-        <Box sx={{
-          flexDirection: showRepos ? 'column' : 'row',
-          flex: 1,
-          flexBasis: '25%',
-        }}>
-          <Box className='user'>
+  const userList = users.map((user: User) => {
+    const repos = repositories[user.login];
+    const isFetchingRepos = loadingRepos[user.login] ?? false;
+
+    return (
+        <Accordion
+            key={`${user.id}-${id}-${user.login}`}
+            onChange={handleAccordionToggle(user.login)}
+            className='user-accordion'
+            sx={{
+              width: '80%',
+              mt: '12px',
+              backgroundColor: 'rgba(105, 105, 105, 0.85)',
+              borderRadius: '10px !important',
+              color: 'white',
+              backdropFilter: 'blur(6px)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(120, 120, 120, 0.95)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
+              },
+              '&::before': {display: 'none'}, // remove MUI default divider
+              '& .MuiAccordionSummary-expandIconWrapper': {
+                color: 'rgba(255, 255, 255, 0.7)',
+              },
+            }}>
+
+          {/* ── User header (clickable to expand) ── */}
+          <AccordionSummary
+              expandIcon={<ExpandMoreIcon/>}
+              sx={{
+                '& .MuiAccordionSummary-content': {
+                  alignItems: 'center',
+                  gap: '16px',
+                },
+              }}>
             <Avatar
                 alt={user.login}
                 src={user.avatar_url}
-                sx={{marginTop: '20px', marginLeft: '15px', boxShadow: '0 0 5px 4px rgba(20, 180, 0, 0.8)'}}
+                sx={{
+                  width: 44,
+                  height: 44,
+                  boxShadow: '0 0 5px 4px rgba(20, 180, 0, 0.8)',
+                }}
             />
-            {(showRepos && repositories[user.login]) ? null : <Typography
-                variant='h4'
-                className={
-                  showRepos && repositories[user.login]
-                      ? 'user-login-repos'
-                      : 'user-login'}>
+            <Typography variant='h6' sx={{fontWeight: 500}}>
               {user.login}
-            </Typography>}
-          </Box>
-        </Box>
+            </Typography>
+          </AccordionSummary>
 
-        {/* ============================================================
-            FIX P0: Only show repos section AFTER user clicks "Show repositories"
-            - showRepos=true && repos exist & non-empty → show accordion
-            - showRepos=true && repos fetched but empty → "No repos available"
-            - showRepos=false → show nothing (don't confuse user)
-            ============================================================ */}
-        {showRepos && repositories[user.login] && repositories[user.login].length > 0
-            ? (<Box
-                className='vibrate'
-                sx={{marginLeft: '20px'}}>
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                  <Typography>{user.login} repositories:</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  {repositories[user.login].map((repository) => (
+          {/* ── Repos section (shown on expand) ── */}
+          <AccordionDetails className='vibrate' sx={{pt: 0, pb: '16px', px: '24px'}}>
+            {isFetchingRepos && (
+                <Box sx={{display: 'flex', alignItems: 'center', gap: '10px', py: '8px'}}>
+                  <CircularProgress size={20} sx={{color: 'rgba(20, 180, 0, 0.8)'}}/>
+                  <Typography variant='body2' sx={{color: 'rgba(255,255,255,0.7)'}}>
+                    Fetching repositories…
+                  </Typography>
+                </Box>
+            )}
+
+            {repos && repos.length > 0 && (
+                <Box sx={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+                  {repos.map((repository) => (
                       <Chip
                           key={repository.name}
-                          label={<Link className='link' href={repository.html_url}>{repository.name}</Link>}
+                          label={
+                            <Link
+                                className='link'
+                                href={repository.html_url}
+                                target="_blank"
+                                rel="noopener noreferrer">
+                              {repository.name}
+                            </Link>
+                          }
+                          sx={{
+                            backgroundColor: 'rgba(255,255,255,0.12)',
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255,255,255,0.22)',
+                              transform: 'scale(1.05)',
+                            },
+                          }}
                       />
                   ))}
-                </AccordionDetails>
-              </Accordion>
-            </Box>)
-            : (showRepos && repositories[user.login] && repositories[user.login].length === 0)
-                ? (<Typography sx={{mr: '20px', mt: '20px'}}>No repos available.</Typography>)
-                : null
-        }
-      </Box>
-  ));
+                </Box>
+            )}
+
+            {repos && repos.length === 0 && !isFetchingRepos && (
+                <Typography variant='body2' sx={{color: 'rgba(255,255,255,0.5)', fontStyle: 'italic'}}>
+                  No public repositories found.
+                </Typography>
+            )}
+          </AccordionDetails>
+        </Accordion>
+    );
+  });
 
   return (
-      <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',}}>
+      <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', pb: '40px'}}>
         <FormControl sx={{
           width: '80%',
           mt: '10px',
@@ -136,20 +180,13 @@ function SearchComponent() {
           <input
               type="text"
               ref={searchRef}
-              placeholder="Search users"
+              placeholder="Search GitHub users…"
               onChange={handleSearch}
               style={{flex: 1, padding: 10}}
           />
         </FormControl>
-        <Button
-            variant='contained'
-            className='bounce-btn'
-            sx={{width: '80%', mt: '10px'}}
-            onClick={handleShowAllRepositories}>
-          Show repositories
-        </Button>
-        {loading && <Typography variant='h2' sx={{color: 'white'}}>Loading...</Typography>}
-        {error && <Typography variant='h3' sx={{color: 'indianred'}}>{error}</Typography>}
+        {loading && <Typography variant='h5' sx={{color: 'white', mt: '20px'}}>Loading...</Typography>}
+        {error && <Typography variant='body1' sx={{color: 'indianred', mt: '12px'}}>{error}</Typography>}
         {userList}
       </Box>
   );
