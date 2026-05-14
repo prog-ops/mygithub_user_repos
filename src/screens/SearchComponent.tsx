@@ -1,4 +1,4 @@
-import React, {Dispatch, useEffect, useId, useRef, useState} from 'react';
+import React, {useCallback, useId, useMemo, useRef} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {fetchUsers, fetchRepositories, State, User} from '../redux/store';
 import {
@@ -18,42 +18,34 @@ import {debounce} from "lodash";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 function SearchComponent() {
-  const [showRepos, setShowRepos] = useState(false);
-  const [query, setQuery] = useState("");
+  const [showRepos, setShowRepos] = React.useState(false);
   const users = useSelector((state: State) => state.users);
   const repositories = useSelector((state: State) => state.repositories);
+  const loading = useSelector((state: State) => state.loading);
+  const error = useSelector((state: State) => state.error);
   const dispatch = useDispatch();
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // Stable debounced search — memoized so the same debounce instance persists across renders
+  const debouncedDispatch = useMemo(
+      () => debounce((query: string) => {
+        dispatch(fetchUsers(query) as any);
+      }, 500),
+      [dispatch]
+  );
 
-  const handleSearch = async () => {
-    const newQuery = searchRef.current?.value ?? "";
-    setQuery(newQuery);
-    setLoading(true);
-    try {
-      if (newQuery === "") {
-        dispatch({type: "CLEAR_USERS"});
-      } else {
-        await dispatch(fetchUsers(newQuery) as any); // immediate call to fetchUsers, this will call api after every character, instead, better use debouncing (debouncedHandleSearch)
-      }
-      setError("");
-    } catch (err: any) {
-      setError(
-          err.response?.status === 403
-              ? "You have exceeded the Github API rate limit. Please try again later."
-              : "An error occurred while fetching users. Please try again later."
-      );
-    } finally {
-      setLoading(false);
+  const handleSearch = useCallback(() => {
+    const query = searchRef.current?.value?.trim() ?? "";
+    if (query === "") {
+      debouncedDispatch.cancel();
+      dispatch({type: "CLEAR_USERS"});
+    } else {
+      debouncedDispatch(query);
     }
-  };
+  }, [dispatch, debouncedDispatch]);
 
-  const debouncedHandleSearch = debounce(handleSearch, 1_000); // 1s debounce delay
-
-  const handleShowAllRepositories = async () => {
-    setLoading(true);
+  const handleShowAllRepositories = useCallback(async () => {
+    if (users.length === 0) return;
     try {
       await Promise.all(
           users.map(async (user: User) => {
@@ -63,27 +55,16 @@ function SearchComponent() {
           })
       );
       setShowRepos(true);
-      setError("");
-    } catch (err: any) {
-      setError(
-          err.response?.status === 403
-              ? "You have exceeded the Github API rate limit. Please try again later."
-              : "An error occurred while fetching repositories. Please try again later."
-      );
-    } finally {
-      setLoading(false);
+    } catch {
+      // Errors are handled by the thunk → redux store
     }
-  };
+  }, [users, repositories, dispatch]);
 
-  /*useEffect(() => {
-    // console.log(query)
-  }, [])*/
-
-  const id = useId()
+  const id = useId();
 
   const userList = users.map((user: User) => (
       <Box
-          key={user.id + id + user.login}
+          key={`${user.id}-${id}-${user.login}`}
           className='item-container'
           style={{width: showRepos ? '80%' : '50%'}}>
         <Box sx={{
@@ -91,7 +72,6 @@ function SearchComponent() {
           flex: 1,
           flexBasis: '25%',
         }}>
-          {/*<img src={user.avatar_url} alt={user.login} className='avatar'/>*/}
           <Box className='user'>
             <Avatar
                 alt={user.login}
@@ -109,33 +89,33 @@ function SearchComponent() {
           </Box>
         </Box>
 
-        {(showRepos && repositories[user.login])
+        {/* ============================================================
+            FIX P0: Only show repos section AFTER user clicks "Show repositories"
+            - showRepos=true && repos exist & non-empty → show accordion
+            - showRepos=true && repos fetched but empty → "No repos available"
+            - showRepos=false → show nothing (don't confuse user)
+            ============================================================ */}
+        {showRepos && repositories[user.login] && repositories[user.login].length > 0
             ? (<Box
                 className='vibrate'
-                sx={{
-                  // flex: 1,
-                  // flexBasis: '100%'
-                  marginLeft: '20px'
-                }}>
+                sx={{marginLeft: '20px'}}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                  <Typography>{(showRepos && repositories[user.login]) ? user.login + " repositories:" : ""}</Typography>
+                  <Typography>{user.login} repositories:</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   {repositories[user.login].map((repository) => (
-                      // <Box key={repository.name} sx={{mt: '8px', mr: '8px', mb: '4px', p: '4px'}}>
                       <Chip
                           key={repository.name}
                           label={<Link className='link' href={repository.html_url}>{repository.name}</Link>}
                       />
-                      // </Box>
                   ))}
                 </AccordionDetails>
               </Accordion>
             </Box>)
-            : (!showRepos && !repositories[user.login]) ?
-                (<Typography sx={{mr: '20px', mt: '20px'}}>No repos available.</Typography>) :
-                null
+            : (showRepos && repositories[user.login] && repositories[user.login].length === 0)
+                ? (<Typography sx={{mr: '20px', mt: '20px'}}>No repos available.</Typography>)
+                : null
         }
       </Box>
   ));
@@ -157,8 +137,7 @@ function SearchComponent() {
               type="text"
               ref={searchRef}
               placeholder="Search users"
-              onChange={debouncedHandleSearch}
-              // onChange={handleSearch}
+              onChange={handleSearch}
               style={{flex: 1, padding: 10}}
           />
         </FormControl>
@@ -174,7 +153,7 @@ function SearchComponent() {
         {userList}
       </Box>
   );
-};
+}
 
 export default SearchComponent;
 /*
