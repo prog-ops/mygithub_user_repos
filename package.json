@@ -1,5 +1,5 @@
 {
-  "homepage": "https://mygithub-user-repos-1u8a.vercel.app/",
+  "homepage": "https://mygithub-user-repos.vercel.app/",
   "name": "mygithub_user_repos",
   "version": "0.1.0",
   "private": true,
@@ -16,8 +16,8 @@
     "@types/node": "^16.18.23",
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",
-    "axios": "^1.3.5",
-    "lodash": "^4.17.21",
+    "axios": "1.15.2",
+    "lodash": "4.18.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",
