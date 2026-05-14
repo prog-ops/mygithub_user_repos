@@ -1,13 +1,12 @@
 import React, {useCallback, useId, useMemo, useRef} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
-import {fetchUsers, fetchRepositories, State, User} from '../redux/store';
+import {fetchUsers, fetchRepositories, State, User, Repository} from '../redux/store';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Avatar,
   Box,
-  Chip,
   CircularProgress,
   FormControl,
   Link,
@@ -16,6 +15,8 @@ import {
 import '../styles/styles.css'
 import {debounce} from "lodash";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import ForkRightRoundedIcon from '@mui/icons-material/ForkRightRounded';
 
 function SearchComponent() {
   const users = useSelector((state: State) => state.users);
@@ -128,28 +129,56 @@ function SearchComponent() {
             )}
 
             {repos && repos.length > 0 && (
-                <Box sx={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-                  {repos.map((repository) => (
-                      <Chip
+                <Box sx={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                  {repos.map((repository: Repository) => (
+                      <Box
                           key={repository.name}
-                          label={
-                            <Link
-                                className='link'
-                                href={repository.html_url}
-                                target="_blank"
-                                rel="noopener noreferrer">
-                              {repository.name}
-                            </Link>
-                          }
+                          className='repo-card'
                           sx={{
-                            backgroundColor: 'rgba(255,255,255,0.12)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            backgroundColor: 'rgba(255,255,255,0.08)',
+                            borderRadius: '8px',
+                            px: '14px',
+                            py: '10px',
                             transition: 'all 0.2s ease',
                             '&:hover': {
-                              backgroundColor: 'rgba(255,255,255,0.22)',
-                              transform: 'scale(1.05)',
+                              backgroundColor: 'rgba(255,255,255,0.16)',
+                              transform: 'translateX(4px)',
                             },
-                          }}
-                      />
+                          }}>
+                        {/* Repo name link */}
+                        <Link
+                            href={repository.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                              color: '#58a6ff',
+                              textDecoration: 'none',
+                              fontWeight: 500,
+                              fontSize: '0.9rem',
+                              '&:hover': { color: '#79c0ff', textDecoration: 'underline' },
+                            }}>
+                          {repository.name}
+                        </Link>
+
+                        {/* Stars & Forks */}
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0, ml: '12px'}}>
+                          <Box sx={{display: 'flex', alignItems: 'center', gap: '3px'}}>
+                            <StarRoundedIcon sx={{fontSize: 16, color: '#f0c040'}}/>
+                            <Typography variant='caption' sx={{color: 'rgba(255,255,255,0.75)', fontWeight: 600}}>
+                              {repository.stargazers_count}
+                            </Typography>
+                          </Box>
+                          <Box sx={{display: 'flex', alignItems: 'center', gap: '3px'}}>
+                            <ForkRightRoundedIcon sx={{fontSize: 16, color: 'rgba(255,255,255,0.5)'}}/>
+                            <Typography variant='caption' sx={{color: 'rgba(255,255,255,0.75)', fontWeight: 600}}>
+                              {repository.forks_count}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
                   ))}
                 </Box>
             )}

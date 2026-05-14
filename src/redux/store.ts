@@ -8,9 +8,11 @@ export interface User {
   id: number;
 }
 
-interface Repository {
+export interface Repository {
   name: string;
   html_url: string;
+  stargazers_count: number;
+  forks_count: number;
 }
 
 export interface State {
@@ -184,6 +186,8 @@ export function fetchRepositories(userLogin: string) {
       const repositories = response.data.map((item: any) => ({
         name: item.name,
         html_url: item.html_url,
+        stargazers_count: item.stargazers_count ?? 0,
+        forks_count: item.forks_count ?? 0,
       }));
       dispatch({
         type: 'SET_REPOSITORIES',
