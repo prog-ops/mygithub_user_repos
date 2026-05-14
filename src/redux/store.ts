@@ -15,8 +15,14 @@ export interface Repository {
   forks_count: number;
 }
 
+export interface UserDetail {
+  public_repos: number;
+  top_languages: string[];
+}
+
 export interface State {
   users: User[];
+  userDetails: Record<string, UserDetail>;
   repositories: Record<string, Repository[]>;
   loading: boolean;
   error: string | null;
@@ -29,6 +35,7 @@ interface Action {
 
 const initialState: State = {
   users: [],
+  userDetails: {},
   repositories: {},
   loading: false,
   error: null,
@@ -42,6 +49,14 @@ function reducer(state = initialState, action: Action) {
         users: action.payload,
         loading: false,
         error: null,
+      };
+    case 'SET_USER_DETAILS':
+      return {
+        ...state,
+        userDetails: {
+          ...state.userDetails,
+          ...action.payload,
+        },
       };
     case 'SET_REPOSITORIES':
       return {
@@ -69,6 +84,7 @@ function reducer(state = initialState, action: Action) {
       return {
         ...state,
         users: [],
+        userDetails: {},
         repositories: {},
         loading: false,
         error: null,
@@ -165,6 +181,10 @@ export function fetchUsers(query: string) {
           .map(({ user }) => user);
 
       dispatch({ type: 'SET_USERS', payload: ranked });
+
+      // Enrich: fetch profile + repos for each user in parallel (for public_repos count & top languages)
+      enrichUsers(ranked, dispatch);
+
     } catch (error: any) {
       if (error.response && error.response.status === 403) {
         dispatch({ type: 'SET_ERROR', payload: 'Rate limit exceeded. Try again later.' });
@@ -175,14 +195,61 @@ export function fetchUsers(query: string) {
   };
 }
 
+// Fetch user profiles + repos in background (non-blocking) to populate details on each card
+function enrichUsers(users: User[], dispatch: any) {
+  users.forEach(async (user) => {
+    try {
+      // Fetch profile (public_repos) and repos (languages) in parallel
+      const [profileRes, reposRes] = await Promise.all([
+        api.get(`/users/${user.login}`).catch(() => null),
+        api.get(`/users/${user.login}/repos?per_page=100&sort=stars`).catch(() => null),
+      ]);
 
+      const publicRepos = profileRes?.data?.public_repos ?? 0;
+      const repoItems = reposRes?.data ?? [];
+
+      // Aggregate top 3 languages from repos
+      const langCount: Record<string, number> = {};
+      repoItems.forEach((repo: any) => {
+        if (repo.language) {
+          langCount[repo.language] = (langCount[repo.language] || 0) + 1;
+        }
+      });
+      const topLanguages = Object.entries(langCount)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([lang]) => lang);
+
+      // Dispatch user details
+      dispatch({
+        type: 'SET_USER_DETAILS',
+        payload: { [user.login]: { public_repos: publicRepos, top_languages: topLanguages } },
+      });
+
+      // Also cache repos for accordion (so expanding doesn't re-fetch)
+      const mappedRepos: Repository[] = repoItems.map((item: any) => ({
+        name: item.name,
+        html_url: item.html_url,
+        stargazers_count: item.stargazers_count ?? 0,
+        forks_count: item.forks_count ?? 0,
+      }));
+      dispatch({
+        type: 'SET_REPOSITORIES',
+        payload: { userLogin: user.login, repositories: mappedRepos },
+      });
+
+    } catch {
+      // Silently ignore — details are optional enrichment
+    }
+  });
+}
 
 export function fetchRepositories(userLogin: string) {
   return async (dispatch: any) => {
     try {
 
       dispatch({ type: 'SET_LOADING' });
-      const response = await api.get(`/users/${userLogin}/repos`);
+      const response = await api.get(`/users/${userLogin}/repos?per_page=100&sort=stars`);
       const repositories = response.data.map((item: any) => ({
         name: item.name,
         html_url: item.html_url,

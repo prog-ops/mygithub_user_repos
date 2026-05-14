@@ -7,6 +7,7 @@ import {
   AccordionSummary,
   Avatar,
   Box,
+  Chip,
   CircularProgress,
   FormControl,
   Link,
@@ -17,9 +18,26 @@ import {debounce} from "lodash";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import ForkRightRoundedIcon from '@mui/icons-material/ForkRightRounded';
+import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
+import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
+
+// Map language names to branded colors
+const LANG_COLORS: Record<string, string> = {
+  JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5', Java: '#b07219',
+  Go: '#00ADD8', Rust: '#dea584', 'C++': '#f34b7d', C: '#555555',
+  'C#': '#178600', Ruby: '#701516', PHP: '#4F5D95', Swift: '#F05138',
+  Kotlin: '#A97BFF', Dart: '#00B4AB', HTML: '#e34c26', CSS: '#563d7c',
+  Shell: '#89e051', Lua: '#000080', Scala: '#c22d40', R: '#198CE7',
+  Vue: '#41b883', Jupyter: '#DA5B0B',
+};
+
+function getLangColor(lang: string): string {
+  return LANG_COLORS[lang] ?? '#8b949e';
+}
 
 function SearchComponent() {
   const users = useSelector((state: State) => state.users);
+  const userDetails = useSelector((state: State) => state.userDetails);
   const repositories = useSelector((state: State) => state.repositories);
   const loading = useSelector((state: State) => state.loading);
   const error = useSelector((state: State) => state.error);
@@ -68,6 +86,7 @@ function SearchComponent() {
 
   const userList = users.map((user: User) => {
     const repos = repositories[user.login];
+    const details = userDetails[user.login];
     const isFetchingRepos = loadingRepos[user.login] ?? false;
 
     return (
@@ -88,7 +107,7 @@ function SearchComponent() {
                 transform: 'translateY(-2px)',
                 boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
               },
-              '&::before': {display: 'none'}, // remove MUI default divider
+              '&::before': {display: 'none'},
               '& .MuiAccordionSummary-expandIconWrapper': {
                 color: 'rgba(255, 255, 255, 0.7)',
               },
@@ -107,14 +126,52 @@ function SearchComponent() {
                 alt={user.login}
                 src={user.avatar_url}
                 sx={{
-                  width: 44,
-                  height: 44,
+                  width: 48,
+                  height: 48,
                   boxShadow: '0 0 5px 4px rgba(20, 180, 0, 0.8)',
+                  flexShrink: 0,
                 }}
             />
-            <Typography variant='h6' sx={{fontWeight: 500}}>
-              {user.login}
-            </Typography>
+
+            {/* Username + repo count + top languages */}
+            <Box sx={{display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1}}>
+              <Typography variant='h6' sx={{fontWeight: 500, lineHeight: 1.3}}>
+                {user.login}
+              </Typography>
+
+              {/* Repo count */}
+              {details && (
+                  <Box sx={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+                    <FolderRoundedIcon sx={{fontSize: 14, color: 'rgba(255,255,255,0.5)'}}/>
+                    <Typography variant='caption' sx={{color: 'rgba(255,255,255,0.6)'}}>
+                      {details.public_repos} repos
+                    </Typography>
+                  </Box>
+              )}
+
+              {/* Top 3 languages */}
+              {details && details.top_languages.length > 0 && (
+                  <Box sx={{display: 'flex', alignItems: 'center', gap: '4px', mt: '2px', flexWrap: 'wrap'}}>
+                    <CodeRoundedIcon sx={{fontSize: 14, color: 'rgba(255,255,255,0.5)'}}/>
+                    {details.top_languages.map(lang => (
+                        <Chip
+                            key={lang}
+                            label={lang}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: '0.68rem',
+                              fontWeight: 600,
+                              backgroundColor: getLangColor(lang) + '30', // 30 = ~19% opacity hex
+                              color: getLangColor(lang),
+                              border: `1px solid ${getLangColor(lang)}50`,
+                              '& .MuiChip-label': {px: '6px'},
+                            }}
+                        />
+                    ))}
+                  </Box>
+              )}
+            </Box>
           </AccordionSummary>
 
           {/* ── Repos section (shown on expand) ── */}
@@ -222,6 +279,3 @@ function SearchComponent() {
 }
 
 export default SearchComponent;
-/*
-The useDebounce hook can be implemented in the SearchComponent to prevent the fetchUsers function from being called repeatedly on every keystroke.
- */
