@@ -2,6 +2,12 @@
 
 Allows you to search Github users and repos. A frontend project with improved UI effects, animations, logical conditions, styles, keyboard handling, error and loading handling, and responsive UI, that is optimized for mobile view.
 
+### Challenge & Solution
+
+Building a real-time search interface for external APIs, such as GitHub's user data, presents a significant technical challenge in terms of performance and user experience. Developers often struggle with managing excessive API requests, handling complex asynchronous side effects, and ensuring UI responsiveness across various devices. Furthermore, providing immediate feedback during network delays or errors, while maintaining full accessibility—including keyboard navigation—can easily result in convoluted, hard-to-maintain code.
+To overcome these obstacles, this application is engineered using a robust technical foundation centered around React and TypeScript. This combination provides a predictable, component-driven architecture with strong type safety, significantly reducing runtime errors. We integrated Redux for centralized state management, allowing consistent data flow, while leveraging React Hooks to cleanly decouple UI components from the underlying business logic and API interactions.
+For optimal performance and a polished user experience, we implemented strategic debouncing mechanisms to throttle API calls during fast typing, preventing rate-limit exhaustion. The interface is meticulously crafted with Material UI, ensuring a modern, mobile-optimized, and highly responsive design. Additionally, by introducing comprehensive keyboard handling, robust error and loading state management, and rigorous testing, we delivered a resilient application that guarantees a seamless experience.
+
 ### Tech Stack
 This project is built using the following tech stack:
 - React
