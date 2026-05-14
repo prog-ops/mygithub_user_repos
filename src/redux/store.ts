@@ -205,7 +205,10 @@ function enrichUsers(users: User[], dispatch: any) {
         api.get(`/users/${user.login}/repos?per_page=100&sort=stars`).catch(() => null),
       ]);
 
-      const publicRepos = profileRes?.data?.public_repos ?? 0;
+      // Only dispatch if at least the profile API succeeded (avoid showing "0 repos" on rate-limit)
+      if (!profileRes) return;
+
+      const publicRepos = profileRes.data?.public_repos ?? 0;
       const repoItems = reposRes?.data ?? [];
 
       // Aggregate top 3 languages from repos
@@ -227,16 +230,18 @@ function enrichUsers(users: User[], dispatch: any) {
       });
 
       // Also cache repos for accordion (so expanding doesn't re-fetch)
-      const mappedRepos: Repository[] = repoItems.map((item: any) => ({
-        name: item.name,
-        html_url: item.html_url,
-        stargazers_count: item.stargazers_count ?? 0,
-        forks_count: item.forks_count ?? 0,
-      }));
-      dispatch({
-        type: 'SET_REPOSITORIES',
-        payload: { userLogin: user.login, repositories: mappedRepos },
-      });
+      if (reposRes) {
+        const mappedRepos: Repository[] = repoItems.map((item: any) => ({
+          name: item.name,
+          html_url: item.html_url,
+          stargazers_count: item.stargazers_count ?? 0,
+          forks_count: item.forks_count ?? 0,
+        }));
+        dispatch({
+          type: 'SET_REPOSITORIES',
+          payload: { userLogin: user.login, repositories: mappedRepos },
+        });
+      }
 
     } catch {
       // Silently ignore — details are optional enrichment
