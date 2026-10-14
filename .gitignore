@@ -1,23 +1,138 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Stack: Create React App (react-scripts) + TypeScript, deployed to Vercel / gh-pages.
+#
+# NOTE: Lockfiles (package-lock.json / yarn.lock / pnpm-lock.yaml) are intentionally
+# NOT ignored — commit them for reproducible installs (`npm ci`).
 
-# dependencies
-/node_modules
+# ─────────────────────────────────────────────
+# Dependencies
+# ─────────────────────────────────────────────
+node_modules/
+jspm_packages/
+web_modules/
+bower_components/
+
+# Yarn Plug'n'Play / Berry
 /.pnp
 .pnp.js
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
 
-# testing
-/coverage
+# pnpm
+.pnpm-store/
 
-# production
+# ─────────────────────────────────────────────
+# Build output
+# ─────────────────────────────────────────────
 /build
+/dist
+/out
+.gh-pages/
+*.tsbuildinfo
 
-# misc
-.DS_Store
+# ─────────────────────────────────────────────
+# Testing & coverage
+# ─────────────────────────────────────────────
+/coverage
+.nyc_output/
+junit.xml
+test-results/
+playwright-report/
+/cypress/videos/
+/cypress/screenshots/
+
+# ─────────────────────────────────────────────
+# Cache
+# ─────────────────────────────────────────────
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.npm/
+.node_repl_history
+.jest-cache/
+node_modules/.cache/
+.temp/
+.tmp/
+
+# ─────────────────────────────────────────────
+# Environment variables / secrets
+# ─────────────────────────────────────────────
+.env
 .env.local
+.env.*.local
 .env.development.local
 .env.test.local
 .env.production.local
+!.env.example
+*.pem
+*.key
 
+# ─────────────────────────────────────────────
+# Deployment platforms
+# ─────────────────────────────────────────────
+.vercel
+.netlify
+
+# ─────────────────────────────────────────────
+# Logs
+# ─────────────────────────────────────────────
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# ─────────────────────────────────────────────
+# Editors & IDEs
+# ─────────────────────────────────────────────
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# VS Code (keep shared workspace settings)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+*.code-workspace
+
+# Vim / Emacs / misc
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+
+# ─────────────────────────────────────────────
+# OS generated files
+# ─────────────────────────────────────────────
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
